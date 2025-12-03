@@ -16,11 +16,12 @@ const peerServer = ExpressPeerServer(server, {
   debug: true,
   path: "/myapp",
   allow_discovery: true,
-  proxied: true // ВАЖНО для Render (так как он работает за прокси Nginx)
+  proxied: true, // ВАЖНО для Render (так как он работает за прокси Nginx)
+  alive_timeout: 60000 // Увеличиваем таймаут для мобильных сетей
 });
 
 app.use("/peerjs", peerServer);
 
 app.get("/", (req, res) => {
-  res.send("Battleship Signaling Server is running! (v1.0)");
+  res.send("Battleship Signaling Server is running! (v1.0.1 Mobile Fix)");
 });

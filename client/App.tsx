@@ -138,7 +138,18 @@ const App: React.FC = () => {
         }
     }
 
+    // iOS/Mobile Lifecycle handler
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible' && peerRef.current && peerRef.current.disconnected) {
+            console.log("Tab visible, reconnecting to signaling server...");
+            setConnectionStep("Восстановление связи с сервером...");
+            peerRef.current.reconnect();
+        }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (peerRef.current) peerRef.current.destroy();
       if (connTimeoutRef.current) clearTimeout(connTimeoutRef.current);
     };
@@ -210,6 +221,7 @@ const App: React.FC = () => {
 
     let peerConfig: any = {
         debug: 1, 
+        pingInterval: 5000, // Important for mobile to keep connection alive
         config: {
             iceServers: ICE_SERVERS,
             iceTransportPolicy: 'all',
@@ -353,8 +365,10 @@ const App: React.FC = () => {
         setMpError(null);
         setConnectionStep('Соединение установлено!');
         
-        // Send Hello
-        sendData({ type: 'HELLO' });
+        // Small delay for iOS stability before sending data
+        setTimeout(() => {
+            sendData({ type: 'HELLO' });
+        }, 500);
     });
 
     conn.on('data', (data: NetworkMessage) => {
