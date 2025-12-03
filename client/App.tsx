@@ -89,6 +89,19 @@ const App: React.FC = () => {
   const [playerBoard, setPlayerBoard] = useState<BoardState>(createEmptyBoard());
   const [enemyBoard, setEnemyBoard] = useState<BoardState>(createEmptyBoard());
 
+  // Refs for Board State to solve closure issues in Event Listeners
+  const playerBoardRef = useRef(playerBoard);
+  const enemyBoardRef = useRef(enemyBoard);
+
+  useEffect(() => {
+    playerBoardRef.current = playerBoard;
+  }, [playerBoard]);
+
+  useEffect(() => {
+    enemyBoardRef.current = enemyBoard;
+  }, [enemyBoard]);
+
+
   // Placement State
   const [currentShipIndex, setCurrentShipIndex] = useState(0); 
   const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
@@ -397,8 +410,9 @@ const App: React.FC = () => {
   // --- Game Actions ---
 
   const handleIncomingShot = (x: number, y: number) => {
-      // Process shot on MY board
-      const { board: newBoard, result, sunkShipCoords } = processShot(playerBoard, x, y);
+      // FIX: Use REF to get current state, otherwise we use stale closure (empty board)
+      const currentBoard = playerBoardRef.current;
+      const { board: newBoard, result, sunkShipCoords } = processShot(currentBoard, x, y);
       setPlayerBoard(newBoard);
 
       // Notify opponent of result
@@ -427,7 +441,9 @@ const App: React.FC = () => {
   };
 
   const handleShotResult = (x: number, y: number, result: 'hit' | 'miss' | 'sunk', sunkShipCoords?: Coordinate[]) => {
-      const newEnemyBoard = updateBoardWithResult(enemyBoard, x, y, result, sunkShipCoords);
+      // FIX: Use REF for enemy board as well to be safe
+      const currentEnemyBoard = enemyBoardRef.current;
+      const newEnemyBoard = updateBoardWithResult(currentEnemyBoard, x, y, result, sunkShipCoords);
       setEnemyBoard(newEnemyBoard);
 
       if (result === 'miss') {
